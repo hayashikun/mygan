@@ -8,3 +8,4 @@ fire
 botocore
 boto3
 matplotlib
+Pillow

@@ -17,7 +17,7 @@ class Generator(nn.Module):
             nn.ConvTranspose2d(image_size * 2, image_size, 4, 2, 1, bias=False),
             nn.BatchNorm2d(image_size),
             nn.ReLU(True),
-            nn.ConvTranspose2d(image_size, 3, 4, 2, 1, bias=False),
+            nn.ConvTranspose2d(image_size, 1, 4, 2, 1, bias=False),
             nn.Tanh()
         )
 

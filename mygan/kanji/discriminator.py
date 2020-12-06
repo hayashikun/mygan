@@ -5,7 +5,7 @@ class Discriminator(nn.Module):
     def __init__(self, image_size):
         super(Discriminator, self).__init__()
         self.main = nn.Sequential(
-            nn.Conv2d(3, image_size, 4, 2, 1, bias=False),
+            nn.Conv2d(1, image_size, 4, 2, 1, bias=False),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Conv2d(image_size, image_size * 2, 4, 2, 1, bias=False),
             nn.BatchNorm2d(image_size * 2),
@@ -19,8 +19,6 @@ class Discriminator(nn.Module):
             nn.Conv2d(image_size * 8, 1, 4, 1, 0, bias=False),
             nn.Sigmoid()
         )
-
-        print("Discriminator", self.main)
 
     def forward(self, input_vec):
         return self.main(input_vec)
