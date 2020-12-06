@@ -2,10 +2,10 @@ from torch import nn
 
 
 class Discriminator(nn.Module):
-    def __init__(self, image_size, n_channel):
+    def __init__(self, image_size):
         super(Discriminator, self).__init__()
         self.main = nn.Sequential(
-            nn.Conv2d(n_channel, image_size, 4, 2, 1, bias=False),
+            nn.Conv2d(3, image_size, 4, 2, 1, bias=False),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Conv2d(image_size, image_size * 2, 4, 2, 1, bias=False),
             nn.BatchNorm2d(image_size * 2),

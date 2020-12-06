@@ -8,13 +8,12 @@ from torch import nn, optim
 from torchvision import datasets, transforms, utils as vutils
 
 from mygan import TmpFilePath
-from mygan.discriminator import Discriminator
-from mygan.generator import Generator
+from mygan.face.discriminator import Discriminator
+from mygan.face.generator import Generator
 
 _device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 IMAGE_SIZE = 64
-N_CHANNEL = 3
 LATENT_VECTOR_SIZE = 100
 BATCH_SIZE = 200
 MODEL_PATH = os.path.join(TmpFilePath, "face_model")
@@ -38,8 +37,8 @@ def _dataloader():
 
 
 def _nets():
-    net_g = Generator(LATENT_VECTOR_SIZE, IMAGE_SIZE, N_CHANNEL).to(_device)
-    net_d = Discriminator(IMAGE_SIZE, N_CHANNEL).to(_device)
+    net_g = Generator(LATENT_VECTOR_SIZE, IMAGE_SIZE).to(_device)
+    net_d = Discriminator(IMAGE_SIZE).to(_device)
     if os.path.exists(MODEL_G_PATH):
         net_g.load_state_dict(torch.load(MODEL_G_PATH))
     if os.path.exists(MODEL_D_PATH):

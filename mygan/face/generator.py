@@ -2,7 +2,7 @@ from torch import nn
 
 
 class Generator(nn.Module):
-    def __init__(self, latent_vector_size, image_size, n_channel):
+    def __init__(self, latent_vector_size, image_size):
         super(Generator, self).__init__()
         self.main = nn.Sequential(
             nn.ConvTranspose2d(latent_vector_size, image_size * 8, 4, 1, 0, bias=False),
@@ -17,7 +17,7 @@ class Generator(nn.Module):
             nn.ConvTranspose2d(image_size * 2, image_size, 4, 2, 1, bias=False),
             nn.BatchNorm2d(image_size),
             nn.ReLU(True),
-            nn.ConvTranspose2d(image_size, n_channel, 4, 2, 1, bias=False),
+            nn.ConvTranspose2d(image_size, 3, 4, 2, 1, bias=False),
             nn.Tanh()
         )
 

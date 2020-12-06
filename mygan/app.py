@@ -18,7 +18,7 @@ def sync():
     s3.sync(os.path.join(TmpFilePath, "model"), "mygan/face_model/")
 
 
-def train(n_epochs=20):
+def face_train(n_epochs=20):
     gan.train(n_epochs)
 
 
