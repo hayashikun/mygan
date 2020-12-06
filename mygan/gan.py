@@ -16,9 +16,13 @@ _device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 IMAGE_SIZE = 64
 N_CHANNEL = 3
 LATENT_VECTOR_SIZE = 100
-BATCH_SIZE = 128
-MODEL_G_PATH = os.path.join(TmpFilePath, "generator.pt")
-MODEL_D_PATH = os.path.join(TmpFilePath, "discriminator.pt")
+BATCH_SIZE = 200
+MODEL_PATH = os.path.join(TmpFilePath, "model")
+MODEL_G_PATH = os.path.join(MODEL_PATH, "generator.pt")
+MODEL_D_PATH = os.path.join(MODEL_PATH, "discriminator.pt")
+
+if not os.path.exists(MODEL_PATH):
+    os.makedirs(MODEL_PATH)
 
 
 def _dataloader():
@@ -43,9 +47,9 @@ def _nets():
     return net_g, net_d
 
 
-def train(n_epochs=50):
+def train(n_epochs):
     criterion = nn.BCELoss()
-    fixed_noise = torch.randn(64, LATENT_VECTOR_SIZE, 1, 1, device=_device)
+    fixed_noise = torch.randn(16, LATENT_VECTOR_SIZE, 1, 1, device=_device)
     real_label = 1.
     fake_label = 0.
     lr = 0.0002  # Learning rate
@@ -107,12 +111,13 @@ def train(n_epochs=50):
                 with torch.no_grad():
                     fake = net_g(fixed_noise).detach().cpu()
 
-                img = vutils.make_grid(fake, padding=2, normalize=True)
+                img = vutils.make_grid(fake, nrow=4, padding=2, normalize=True)
                 fig, ax = plt.subplots()
                 ax.set_axis_off()
                 ax.imshow(np.transpose(img, (1, 2, 0)))
                 fig.tight_layout()
                 fig.savefig(os.path.join(TmpFilePath, f"gen_{epoch}.png"), bbox_inches="tight", pad_inches=0)
+                plt.close()
 
     fig, ax = plt.subplots()
     ax.plot(g_losses, label="G")
