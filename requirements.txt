@@ -5,3 +5,5 @@ torchvision
 pandas
 opencv-python
 fire
+botocore
+boto3
