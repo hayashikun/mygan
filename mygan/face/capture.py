@@ -1,5 +1,5 @@
 import cv2
-from mygan.face_recognizer import FaceRecognizer
+from mygan.face.face_recognizer import FaceRecognizer
 from mygan import TmpFilePath
 import os
 import time

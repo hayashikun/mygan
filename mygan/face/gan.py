@@ -17,7 +17,7 @@ IMAGE_SIZE = 64
 N_CHANNEL = 3
 LATENT_VECTOR_SIZE = 100
 BATCH_SIZE = 200
-MODEL_PATH = os.path.join(TmpFilePath, "model")
+MODEL_PATH = os.path.join(TmpFilePath, "face_model")
 MODEL_G_PATH = os.path.join(MODEL_PATH, "generator.pt")
 MODEL_D_PATH = os.path.join(MODEL_PATH, "discriminator.pt")
 
