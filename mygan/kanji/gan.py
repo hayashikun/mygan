@@ -13,7 +13,7 @@ from mygan.kanji.generator import Generator
 
 _device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-IMAGE_SIZE = 64
+IMAGE_SIZE = 32
 N_CHANNEL = 1
 KERNEL_SIZE = 2
 LATENT_VECTOR_SIZE = 100
@@ -44,7 +44,7 @@ def _dataloader():
 
 def train(n_epochs):
     criterion = nn.BCELoss()
-    fixed_noise = torch.randn(16, LATENT_VECTOR_SIZE, 1, 1, device=_device)
+    fixed_noise = torch.randn(64, LATENT_VECTOR_SIZE, 1, 1, device=_device)
     real_label = 1.
     fake_label = 0.
     lr = 0.0002  # Learning rate
@@ -113,12 +113,13 @@ def train(n_epochs):
                 with torch.no_grad():
                     fake = net_g(fixed_noise).detach().cpu()
 
-                img = vutils.make_grid(fake, nrow=4, padding=2, normalize=True)
+                img = vutils.make_grid(fake, nrow=8, padding=2, normalize=True)
                 fig, ax = plt.subplots()
                 ax.set_axis_off()
                 ax.imshow(np.transpose(img, (1, 2, 0)))
                 fig.tight_layout()
-                fig.savefig(os.path.join(TmpFilePath, f"gen_{epoch}.png"), bbox_inches="tight", pad_inches=0)
+                fig.savefig(os.path.join(TmpFilePath, f"gen_{epoch}.png"),
+                            bbox_inches="tight", pad_inches=0, dpi=300)
                 plt.close()
 
     fig, ax = plt.subplots()

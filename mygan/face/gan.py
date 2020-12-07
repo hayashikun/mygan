@@ -25,6 +25,9 @@ if not os.path.exists(MODEL_PATH):
 
 
 def _dataloader():
+    def is_valid_file(x):
+        return "tmp/face/" in x
+
     workers = 2
     dataset = datasets.ImageFolder(root=TmpFilePath,
                                    transform=transforms.Compose([
@@ -32,7 +35,8 @@ def _dataloader():
                                        transforms.CenterCrop(IMAGE_SIZE),
                                        transforms.ToTensor(),
                                        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-                                   ]))
+                                   ]),
+                                   is_valid_file=is_valid_file)
     return data_utils.DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=workers)
 
 
@@ -48,7 +52,7 @@ def _nets():
 
 def train(n_epochs):
     criterion = nn.BCELoss()
-    fixed_noise = torch.randn(16, LATENT_VECTOR_SIZE, 1, 1, device=_device)
+    fixed_noise = torch.randn(36, LATENT_VECTOR_SIZE, 1, 1, device=_device)
     real_label = 1.
     fake_label = 0.
     lr = 0.0002  # Learning rate
@@ -110,7 +114,7 @@ def train(n_epochs):
                 with torch.no_grad():
                     fake = net_g(fixed_noise).detach().cpu()
 
-                img = vutils.make_grid(fake, nrow=4, padding=2, normalize=True)
+                img = vutils.make_grid(fake, nrow=6, padding=2, normalize=True)
                 fig, ax = plt.subplots()
                 ax.set_axis_off()
                 ax.imshow(np.transpose(img, (1, 2, 0)))
