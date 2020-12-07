@@ -13,7 +13,10 @@ class Discriminator(nn.Module):
             nn.Conv2d(image_size * 2, image_size * 4, 4, 2, 1, bias=False),
             nn.BatchNorm2d(image_size * 4),
             nn.LeakyReLU(0.2, inplace=True),
-            nn.Conv2d(image_size * 4, 1, 4, 1, 0, bias=False),
+            nn.Conv2d(image_size * 4, image_size * 8, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(image_size * 8),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Conv2d(image_size * 8, 1, 4, 1, 0, bias=False),
             nn.Sigmoid()
         )
         print("Discriminator", self.main)

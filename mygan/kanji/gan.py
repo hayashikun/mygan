@@ -13,7 +13,7 @@ from mygan.kanji.generator import Generator
 
 _device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-IMAGE_SIZE = 32
+IMAGE_SIZE = 64
 N_CHANNEL = 1
 KERNEL_SIZE = 2
 LATENT_VECTOR_SIZE = 100
