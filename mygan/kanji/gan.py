@@ -8,12 +8,10 @@ from torch import nn, optim
 from torchvision import datasets, transforms, utils as vutils
 
 from mygan import TmpFilePath
-from mygan.kanji.discriminator import Discriminator
-from mygan.kanji.generator import Generator
+from mygan.kanji.model import Discriminator, Generator, IMAGE_SIZE
 
 _device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-IMAGE_SIZE = 64
 N_CHANNEL = 1
 KERNEL_SIZE = 2
 LATENT_VECTOR_SIZE = 100
@@ -36,7 +34,6 @@ def _dataloader():
                                        transforms.Grayscale(),
                                        transforms.Resize(IMAGE_SIZE),
                                        transforms.ToTensor(),
-                                       transforms.Normalize(0.5, 0.5),
                                    ]),
                                    is_valid_file=is_valid_file)
     return data_utils.DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=workers)
@@ -50,8 +47,8 @@ def train(n_epochs):
     lr = 0.0002  # Learning rate
     beta1 = 0.5  # Beta1 hyper parameter
 
-    net_g = Generator(LATENT_VECTOR_SIZE, IMAGE_SIZE).to(_device)
-    net_d = Discriminator(IMAGE_SIZE).to(_device)
+    net_g = Generator(LATENT_VECTOR_SIZE).to(_device)
+    net_d = Discriminator().to(_device)
     if os.path.exists(MODEL_G_PATH):
         net_g.load_state_dict(torch.load(MODEL_G_PATH))
     if os.path.exists(MODEL_D_PATH):
@@ -122,9 +119,10 @@ def train(n_epochs):
                             bbox_inches="tight", pad_inches=0, dpi=300)
                 plt.close()
 
-    fig, ax = plt.subplots()
-    ax.plot(g_losses, label="G")
-    ax.plot(d_losses, label="D")
-    ax.set(xlim=(0, n_epochs), xlabel="Epoch", ylabel="Loss")
-    fig.tight_layout()
-    fig.savefig(os.path.join(TmpFilePath, f"loss.png"))
+                fig, ax = plt.subplots()
+                ax.plot(g_losses[:epoch + 1], label="G")
+                ax.plot(d_losses[:epoch + 1], label="D")
+                ax.set(xlim=(0, epoch + 1), xlabel="Epoch", ylabel="Loss")
+                fig.tight_layout()
+                fig.savefig(os.path.join(TmpFilePath, f"loss.png"))
+                plt.close()
