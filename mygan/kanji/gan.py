@@ -8,7 +8,8 @@ from torch import nn, optim
 from torchvision import datasets, transforms, utils as vutils
 
 from mygan import TmpFilePath
-from mygan.kanji.model import Discriminator, Generator, IMAGE_SIZE
+# from mygan.kanji.model import Discriminator, Generator, IMAGE_SIZE
+from mygan.kanji.model_32 import Discriminator, Generator, IMAGE_SIZE
 
 _device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
