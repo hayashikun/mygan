@@ -45,7 +45,7 @@ def train(n_epochs):
     fixed_noise = torch.randn(64, LATENT_VECTOR_SIZE, 1, 1, device=_device)
     real_label = 1.
     fake_label = 0.
-    lr = 0.001  # Learning rate
+    lr = 0.0001  # Learning rate
 
     net_g = Generator(LATENT_VECTOR_SIZE).to(_device)
     net_d = Discriminator().to(_device)
