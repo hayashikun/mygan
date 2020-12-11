@@ -5,6 +5,7 @@ import numpy as np
 import torch
 import torch.utils.data as data_utils
 from torch import nn, optim
+from torch.optim.lr_scheduler import LambdaLR
 from torchvision import datasets, transforms, utils as vutils
 
 from mygan import TmpFilePath
@@ -56,6 +57,8 @@ def train(n_epochs):
 
     optimizer_g = optim.Adam(net_g.parameters(), lr=lr, betas=(0.9, 0.999))
     optimizer_d = optim.Adam(net_d.parameters(), lr=lr, betas=(0.9, 0.999))
+    scheduler_g = LambdaLR(optimizer_g, lr_lambda=lambda e: 0.01 * 10 ** (-e / 1000))
+    scheduler_d = LambdaLR(optimizer_d, lr_lambda=lambda e: 0.01 * 10 ** (-e / 1000))
 
     g_losses = np.empty(shape=(n_epochs,))
     d_losses = np.empty(shape=(n_epochs,))
@@ -126,3 +129,6 @@ def train(n_epochs):
                 fig.tight_layout()
                 fig.savefig(os.path.join(TmpFilePath, f"loss.png"))
                 plt.close()
+
+                scheduler_d.step()
+                scheduler_g.step()
