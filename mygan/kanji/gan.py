@@ -54,10 +54,10 @@ def train(n_epochs):
     if os.path.exists(MODEL_D_PATH):
         net_d.load_state_dict(torch.load(MODEL_D_PATH))
 
-    optimizer_g = optim.Adam(net_g.parameters(), lr=0.001, betas=(0.9, 0.999))
-    optimizer_d = optim.Adam(net_d.parameters(), lr=0.001, betas=(0.9, 0.999))
-    scheduler_g = StepLR(optimizer_g, step_size=500, gamma=0.1)
-    scheduler_d = StepLR(optimizer_d, step_size=500, gamma=0.1)
+    optimizer_g = optim.Adam(net_g.parameters(), lr=0.0001, betas=(0.9, 0.999))
+    optimizer_d = optim.Adam(net_d.parameters(), lr=0.0001, betas=(0.9, 0.999))
+    scheduler_g = StepLR(optimizer_g, step_size=2000, gamma=0.1)
+    scheduler_d = StepLR(optimizer_d, step_size=2000, gamma=0.1)
 
     g_losses = np.empty(shape=(n_epochs,))
     d_losses = np.empty(shape=(n_epochs,))
