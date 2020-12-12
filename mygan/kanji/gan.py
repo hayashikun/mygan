@@ -46,7 +46,6 @@ def train(n_epochs):
     fixed_noise = torch.randn(64, LATENT_VECTOR_SIZE, 1, 1, device=_device)
     real_label = 1.
     fake_label = 0.
-    lr = 0.01  # Learning rate
 
     net_g = Generator(LATENT_VECTOR_SIZE).to(_device)
     net_d = Discriminator().to(_device)
@@ -55,8 +54,8 @@ def train(n_epochs):
     if os.path.exists(MODEL_D_PATH):
         net_d.load_state_dict(torch.load(MODEL_D_PATH))
 
-    optimizer_g = optim.Adam(net_g.parameters(), lr=lr, betas=(0.9, 0.999))
-    optimizer_d = optim.Adam(net_d.parameters(), lr=lr, betas=(0.9, 0.999))
+    optimizer_g = optim.Adam(net_g.parameters(), lr=0.001, betas=(0.9, 0.999))
+    optimizer_d = optim.Adam(net_d.parameters(), lr=0.001, betas=(0.9, 0.999))
     scheduler_g = StepLR(optimizer_g, step_size=100, gamma=0.5)
     scheduler_d = StepLR(optimizer_d, step_size=100, gamma=0.5)
 
