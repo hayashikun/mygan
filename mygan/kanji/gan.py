@@ -121,10 +121,18 @@ def train(n_epochs):
                             bbox_inches="tight", pad_inches=0, dpi=300)
                 plt.close()
 
-                fig, ax = plt.subplots()
-                ax.plot(g_losses[:epoch + 1], label="G")
-                ax.plot(d_losses[:epoch + 1], label="D")
-                ax.set(xlim=(0, epoch + 1), xlabel="Epoch", ylabel="Loss")
+                fig, ax1 = plt.subplots()
+                ax2 = ax1.twinx()
+                ax1.plot(g_losses[:epoch + 1], color="red", label="G")
+                ax2.plot(d_losses[:epoch + 1], color="blue", label="D")
+                ax1.set(xlim=(0, epoch + 1), ylim=(0, g_losses[:epoch + 1].mean() * 1.5), xlabel="Epoch", ylabel="G Loss")
+                ax2.set(ylim=(0, d_losses[:epoch + 1].mean() * 1.5), ylabel="D Loss")
+
+                for ax, c in zip([ax1, ax2], ["red", "blue"]):
+                    ax.set_ylabel(ax.get_ylabel(), color=c)
+                    ax.tick_params(axis="y", colors=c)
+                    ax.spines[ax.yaxis.get_ticks_position()].set_color(c)
+
                 fig.tight_layout()
                 fig.savefig(os.path.join(TmpFilePath, f"loss.png"))
                 plt.close()
