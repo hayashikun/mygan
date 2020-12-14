@@ -19,8 +19,8 @@ KERNEL_SIZE = 2
 LATENT_VECTOR_SIZE = 100
 BATCH_SIZE = 200
 MODEL_PATH = os.path.join(TmpFilePath, "kanji_model")
-MODEL_G_PATH = os.path.join(MODEL_PATH, "generator.pt")
-MODEL_D_PATH = os.path.join(MODEL_PATH, "discriminator.pt")
+MODEL_G_PATH = os.path.join(MODEL_PATH, "generator_{}.pt")
+MODEL_D_PATH = os.path.join(MODEL_PATH, "discriminator_{}.pt")
 
 if not os.path.exists(MODEL_PATH):
     os.makedirs(MODEL_PATH)
@@ -56,8 +56,8 @@ def train(n_epochs):
 
     optimizer_g = optim.Adam(net_g.parameters(), lr=0.0001, betas=(0.9, 0.999))
     optimizer_d = optim.Adam(net_d.parameters(), lr=0.0001, betas=(0.9, 0.999))
-    scheduler_g = StepLR(optimizer_g, step_size=2000, gamma=0.1)
-    scheduler_d = StepLR(optimizer_d, step_size=2000, gamma=0.1)
+    scheduler_g = StepLR(optimizer_g, step_size=1000, gamma=0.8)
+    scheduler_d = StepLR(optimizer_d, step_size=1000, gamma=0.8)
 
     g_losses = np.empty(shape=(n_epochs,))
     d_losses = np.empty(shape=(n_epochs,))
@@ -100,8 +100,9 @@ def train(n_epochs):
                 g_losses[epoch] = err_g.item()
                 d_losses[epoch] = err_d.item()
 
-                torch.save(net_g.state_dict(), MODEL_G_PATH)
-                torch.save(net_d.state_dict(), MODEL_D_PATH)
+                if (epoch + 1) % 1000 == 0:
+                    torch.save(net_g.state_dict(), MODEL_G_PATH.format(epoch))
+                    torch.save(net_d.state_dict(), MODEL_D_PATH.format(epoch))
 
                 print(f'[{epoch}/{n_epochs}]'
                       f'\tDiscriminator Loss: {err_d.item():.4f}'
@@ -125,8 +126,9 @@ def train(n_epochs):
                 ax2 = ax1.twinx()
                 ax1.plot(g_losses[:epoch + 1], color="red", label="G")
                 ax2.plot(d_losses[:epoch + 1], color="blue", label="D")
-                ax1.set(xlim=(0, epoch + 1), ylim=(0, g_losses[:epoch + 1].mean() * 1.5), xlabel="Epoch", ylabel="G Loss")
-                ax2.set(ylim=(0, d_losses[:epoch + 1].mean() * 1.5), ylabel="D Loss")
+                ax1.set(xlim=(0, epoch + 1), ylim=(0, g_losses[:epoch + 1].mean() * 2), xlabel="Epoch",
+                        ylabel="G Loss")
+                ax2.set(ylim=(0, d_losses[:epoch + 1].mean() * 2), ylabel="D Loss")
 
                 for ax, c in zip([ax1, ax2], ["red", "blue"]):
                     ax.set_ylabel(ax.get_ylabel(), color=c)
