@@ -1,12 +1,13 @@
+import logging
 import os
 
 import fire
-import logging
 
 from mygan import TmpFilePath, s3
-from mygan.face import gan, capture
 from mygan import kanji
+from mygan.face import gan, capture
 from mygan.kanji import gan as kanji_gan
+from mygan.mnist import gan as mnist_gan
 
 logging.basicConfig(level=logging.INFO)
 
@@ -30,6 +31,10 @@ def make_kanji_images():
 
 def kanji_train(n_epochs=20):
     kanji_gan.train(n_epochs)
+
+
+def mnist_train(n_epochs=20):
+    mnist_gan.train(n_epochs)
 
 
 if __name__ == "__main__":
