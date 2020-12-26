@@ -1,6 +1,5 @@
 .idea
 tmp
-aws/credentials
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
