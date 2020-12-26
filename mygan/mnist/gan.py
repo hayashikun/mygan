@@ -74,7 +74,7 @@ def train(n_epochs):
             d_total_loss += d_loss.item()
             g_total_loss += g_loss.item()
 
-        g_losses[epoch] = d_total_loss / len(dataloader)
+        g_losses[epoch] = g_total_loss / len(dataloader)
         d_losses[epoch] = d_total_loss / len(dataloader)
 
         print(
