@@ -5,11 +5,9 @@ import numpy as np
 import torch
 import torch.utils.data as data_utils
 from torch import nn, optim
-from torch.optim.lr_scheduler import StepLR
 from torchvision import datasets, transforms, utils as vutils
 
 from mygan import TmpFilePath
-# from mygan.kanji.model import Discriminator, Generator, IMAGE_SIZE
 from mygan.kanji.model_32 import Discriminator, Generator, IMAGE_SIZE
 
 _device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -41,103 +39,86 @@ def _dataloader():
     return data_utils.DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=workers)
 
 
-def train(n_epochs):
+def train(n_epochs, save_model_interval, init_epoch=0):
     criterion = nn.BCELoss()
     fixed_noise = torch.randn(64, LATENT_VECTOR_SIZE, 1, 1, device=_device)
-    real_label = 1.
-    fake_label = 0.
 
     net_g = Generator(LATENT_VECTOR_SIZE).to(_device)
     net_d = Discriminator().to(_device)
-    if os.path.exists(MODEL_G_PATH):
-        net_g.load_state_dict(torch.load(MODEL_G_PATH))
-    if os.path.exists(MODEL_D_PATH):
-        net_d.load_state_dict(torch.load(MODEL_D_PATH))
+    if init_epoch > 0:
+        net_g.load_state_dict(torch.load(MODEL_G_PATH.format(init_epoch - 1)))
+        net_d.load_state_dict(torch.load(MODEL_D_PATH.format(init_epoch - 1)))
 
-    optimizer_g = optim.Adam(net_g.parameters(), lr=0.0001, betas=(0.9, 0.999))
-    optimizer_d = optim.Adam(net_d.parameters(), lr=0.0001, betas=(0.9, 0.999))
-    scheduler_g = StepLR(optimizer_g, step_size=1000, gamma=0.8)
-    scheduler_d = StepLR(optimizer_d, step_size=1000, gamma=0.8)
+    g_optimizer = optim.Adam(net_g.parameters(), lr=0.0002, betas=(0.5, 0.999))
+    d_optimizer = optim.Adam(net_d.parameters(), lr=0.0002, betas=(0.5, 0.999))
 
-    g_losses = np.empty(shape=(n_epochs,))
-    d_losses = np.empty(shape=(n_epochs,))
+    g_losses = np.empty(shape=(n_epochs - init_epoch,))
+    d_losses = np.empty(shape=(n_epochs - init_epoch,))
 
     dataloader = _dataloader()
 
-    for epoch in range(n_epochs):
-        for i, data in enumerate(dataloader, 0):
-            net_d.zero_grad()
-            real_cpu = data[0].to(_device)
-            b_size = real_cpu.size(0)
-            label = torch.full((b_size,), real_label, device=_device)
-            output = net_d(real_cpu).view(-1)
-            err_d_real = criterion(output, label)
-            err_d_real.backward()
-            d_x = output.mean().item()
+    for epoch in range(init_epoch, n_epochs):
+        d_total_loss = 0
+        g_total_loss = 0
+        for i, (images, _) in enumerate(dataloader, 0):
+            images = images.to(_device)
+            b_size = images.size(0)
+            real_labels = torch.ones(b_size, ).to(_device)
+            fake_labels = torch.zeros(b_size, ).to(_device)
 
-            # create fake images using generator
+            # Discriminator
+            d_optimizer.zero_grad()
+            outputs = net_d(images).view(-1)
+            d_loss_real = criterion(outputs, real_labels)
             noise = torch.randn(b_size, LATENT_VECTOR_SIZE, 1, 1, device=_device)
-            fake = net_g(noise)
-            label.fill_(fake_label)
-            output = net_d(fake.detach()).view(-1)
-            err_d_fake = criterion(output, label)
-            err_d_fake.backward()
-            d_g_z1 = output.mean().item()
-            err_d = err_d_real + err_d_fake
-            # update Discriminator
-            optimizer_d.step()
+            fake_images = net_g(noise)
+            outputs = net_d(fake_images.detach()).view(-1)
+            d_loss_fake = criterion(outputs, fake_labels)
 
-            net_g.zero_grad()
-            label.fill_(real_label)
-            output = net_d(fake).view(-1)
-            err_g = criterion(output, label)
-            err_g.backward()
-            d_g_z2 = output.mean().item()
-            # update Generator
-            optimizer_g.step()
+            d_loss = d_loss_real + d_loss_fake
+            d_loss.backward()
+            d_optimizer.step()
 
-            if i == len(dataloader) - 1:
-                g_losses[epoch] = err_g.item()
-                d_losses[epoch] = err_d.item()
+            # Generator
+            g_optimizer.zero_grad()
+            outputs = net_d(fake_images).view(-1)
+            g_loss = criterion(outputs, real_labels)
+            g_loss.backward()
+            g_optimizer.step()
 
-                if (epoch + 1) % 1000 == 0:
-                    torch.save(net_g.state_dict(), MODEL_G_PATH.format(epoch))
-                    torch.save(net_d.state_dict(), MODEL_D_PATH.format(epoch))
+            d_total_loss += d_loss.item()
+            g_total_loss += g_loss.item()
 
-                print(f'[{epoch}/{n_epochs}]'
-                      f'\tDiscriminator Loss: {err_d.item():.4f}'
-                      f'\tGenerator Loss: {err_g.item():.4f}'
-                      f'\tD(x): {d_x:.4f}'
-                      f'\tD(G(z)): {d_g_z1:.4f} / {d_g_z2:.4f}')
+        g_losses[epoch] = g_total_loss / len(dataloader)
+        d_losses[epoch] = d_total_loss / len(dataloader)
 
-                with torch.no_grad():
-                    fake = net_g(fixed_noise).detach().cpu()
+        print(
+            f'[{epoch}/{n_epochs}]'
+            f'\tDiscriminator Loss: {d_losses[epoch]:.4f}'
+            f'\tGenerator Loss: {g_losses[epoch]:.4f}'
+        )
 
-                img = vutils.make_grid(fake, nrow=8, padding=2, normalize=True)
-                fig, ax = plt.subplots()
-                ax.set_axis_off()
-                ax.imshow(np.transpose(img, (1, 2, 0)))
-                fig.tight_layout()
-                fig.savefig(os.path.join(TmpFilePath, f"gen_{epoch}.png"),
-                            bbox_inches="tight", pad_inches=0, dpi=300)
-                plt.close()
+        with torch.no_grad():
+            fake_images = net_g(fixed_noise).detach().cpu()
 
-                fig, ax1 = plt.subplots()
-                ax2 = ax1.twinx()
-                ax1.plot(g_losses[:epoch + 1], color="red", label="G")
-                ax2.plot(d_losses[:epoch + 1], color="blue", label="D")
-                ax1.set(xlim=(0, epoch + 1), ylim=(0, g_losses[:epoch + 1].mean() * 2), xlabel="Epoch",
-                        ylabel="G Loss")
-                ax2.set(ylim=(0, d_losses[:epoch + 1].mean() * 2), ylabel="D Loss")
+        img = vutils.make_grid(fake_images, nrow=8, padding=2, normalize=True)
+        fig, ax = plt.subplots()
+        ax.set_axis_off()
+        ax.imshow(np.transpose(img, (1, 2, 0)))
+        fig.tight_layout()
+        fig.savefig(os.path.join(TmpFilePath, f"kanji_gen_{epoch}.png"),
+                    bbox_inches="tight", pad_inches=0, dpi=300)
+        plt.close()
 
-                for ax, c in zip([ax1, ax2], ["red", "blue"]):
-                    ax.set_ylabel(ax.get_ylabel(), color=c)
-                    ax.tick_params(axis="y", colors=c)
-                    ax.spines[ax.yaxis.get_ticks_position()].set_color(c)
+        if (epoch + 1) % save_model_interval == 0:
+            torch.save(net_g.state_dict(), MODEL_G_PATH.format(epoch))
+            torch.save(net_d.state_dict(), MODEL_D_PATH.format(epoch))
 
-                fig.tight_layout()
-                fig.savefig(os.path.join(TmpFilePath, f"loss.png"))
-                plt.close()
-
-                scheduler_d.step()
-                scheduler_g.step()
+            fig, ax = plt.subplots()
+            ax.plot(g_losses[:epoch + 1], label="Generator")
+            ax.plot(d_losses[:epoch + 1], label="Discriminator")
+            ax.set(xlim=(init_epoch, epoch + 1), xlabel="Epoch", ylabel="Loss")
+            ax.legend()
+            fig.tight_layout()
+            fig.savefig(os.path.join(TmpFilePath, f"kanji_loss.png"))
+            plt.close()

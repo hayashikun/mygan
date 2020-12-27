@@ -21,7 +21,7 @@ def sync():
     s3.sync(os.path.join(TmpFilePath, "model"), "mygan/face_model/")
 
 
-def face_train(n_epochs=20):
+def face_train(n_epochs=500):
     gan.train(n_epochs)
 
 
@@ -29,11 +29,11 @@ def make_kanji_images():
     kanji.make_kanji_images()
 
 
-def kanji_train(n_epochs=20):
-    kanji_gan.train(n_epochs)
+def kanji_train(n_epochs=500, save_model_interval=100, init_epoch=0):
+    kanji_gan.train(n_epochs, save_model_interval, init_epoch)
 
 
-def mnist_train(n_epochs=20):
+def mnist_train(n_epochs=500):
     mnist_gan.train(n_epochs)
 
 

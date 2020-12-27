@@ -1,6 +1,7 @@
-from PIL import Image, ImageDraw, ImageFont
 import os
-import platform
+
+from PIL import Image, ImageDraw, ImageFont
+
 from mygan import PackageRoot, TmpFilePath
 
 KANJI_IMG_PATH = os.path.join(TmpFilePath, "kanji")
@@ -10,11 +11,14 @@ if not os.path.exists(KANJI_IMG_PATH):
 
 
 def font_location():
-    pf = platform.system()
-    if pf == 'Darwin':
-        return "/System/Library/Fonts/ヒラギノ明朝 ProN.ttc"
-    else:
-        return "/usr/share/fonts/opentype/ipafont-mincho/ipam.ttf"
+    for loc in [
+        "/System/Library/Fonts/ヒラギノ明朝 ProN.ttc",  # for Mac
+        "/usr/share/fonts/opentype/ipafont-mincho/ipam.ttf",  # for Linux
+        "/mnt/c/Windows/Fonts/yumin.ttf"  # for WSL
+    ]:
+        if os.path.exists(loc):
+            return loc
+    raise Exception("Font not found.")
 
 
 def make_kanji_images():
