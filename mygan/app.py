@@ -38,4 +38,11 @@ def mnist_train(n_epochs=500):
 
 
 if __name__ == "__main__":
-    fire.Fire()
+    fire.Fire({
+        "camera": camera,
+        "sync": sync,
+        "face_train": face_train,
+        "make_kanji_images": make_kanji_images,
+        "kanji_train": kanji_train,
+        "mnist_train": mnist_train,
+    })
