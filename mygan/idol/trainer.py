@@ -24,7 +24,7 @@ class Trainer:
         if output_path is not None:
             self.output_path = os.path.join(output_path, tag)
         else:
-            self.output_path = os.path.join(TmpFilePath, tag)
+            self.output_path = os.path.join(TmpFilePath, "idol", tag)
 
         self.log_file_path = os.path.join(self.output_path, "log")
         self.checkpoint_path = os.path.join(self.output_path, "checkpoint")
@@ -94,7 +94,7 @@ class Trainer:
             ax.axis("off")
 
         fig.tight_layout()
-        fig.savefig(os.path.join(OUTPUT_DIR_PATH, f"epoch_{epoch}"), dpi=300)
+        fig.savefig(os.path.join(self.output_path, f"epoch_{epoch}"), dpi=300)
         plt.close()
 
     def train(self, epochs):
