@@ -10,97 +10,89 @@ from mygan.mnist import BATCH_SIZE, NOISE_DIM, \
 from mygan.mnist.dataset import load_dataset
 from mygan.mnist.model import make_generator, make_discriminator
 
-generator = make_generator()
-discriminator = make_discriminator()
 
-cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
+class Trainer:
+    def __init__(self):
+        self.generator = make_generator()
+        self.discriminator = make_discriminator()
+        self.criterion = tf.keras.losses.BinaryCrossentropy(from_logits=True)
+        self.fixed_noise = tf.random.normal([16, NOISE_DIM])
 
+        self.generator_optimizer = tf.keras.optimizers.Adam(1e-4)
+        self.discriminator_optimizer = tf.keras.optimizers.Adam(1e-4)
 
-def generator_loss(fake_output):
-    return cross_entropy(tf.ones_like(fake_output), fake_output)
+        self.summary_writer = tf.summary.create_file_writer(LOG_FILE_PATH)
+        self.generator_loss_metrics = tf.keras.metrics.Mean("generator_loss", dtype=tf.float32)
+        self.discriminator_loss_metrics = tf.keras.metrics.Mean("discriminator_loss", dtype=tf.float32)
 
+        self.dataset = load_dataset()
 
-def discriminator_loss(real_output, fake_output):
-    real_loss = cross_entropy(tf.ones_like(real_output), real_output)
-    fake_loss = cross_entropy(tf.zeros_like(fake_output), fake_output)
-    total_loss = real_loss + fake_loss
-    return total_loss
+        self.checkpoint = tf.train.Checkpoint(generator_optimizer=self.generator_optimizer,
+                                              discriminator_optimizer=self.discriminator_optimizer,
+                                              generator=self.generator,
+                                              discriminator=self.discriminator)
 
+    def generator_loss(self, fake_output):
+        return self.criterion(tf.ones_like(fake_output), fake_output)
 
-generator_optimizer = tf.keras.optimizers.Adam(1e-4)
-discriminator_optimizer = tf.keras.optimizers.Adam(1e-4)
+    def discriminator_loss(self, real_output, fake_output):
+        real_loss = self.criterion(tf.ones_like(real_output), real_output)
+        fake_loss = self.criterion(tf.zeros_like(fake_output), fake_output)
+        total_loss = real_loss + fake_loss
+        return total_loss
 
-generator_loss_metrics = tf.keras.metrics.Mean("generator_loss", dtype=tf.float32)
-discriminator_loss_metrics = tf.keras.metrics.Mean("discriminator_loss", dtype=tf.float32)
+    @tf.function
+    def train_step(self, images):
+        noise = tf.random.normal([BATCH_SIZE, NOISE_DIM])
 
-checkpoint = tf.train.Checkpoint(generator_optimizer=generator_optimizer,
-                                 discriminator_optimizer=discriminator_optimizer,
-                                 generator=generator,
-                                 discriminator=discriminator)
+        with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
+            generated_images = self.generator(noise, training=True)
 
+            real_output = self.discriminator(images, training=True)
+            fake_output = self.discriminator(generated_images, training=True)
 
-@tf.function
-def train_step(images):
-    noise = tf.random.normal([BATCH_SIZE, NOISE_DIM])
+            gen_loss = self.generator_loss(fake_output)
+            disc_loss = self.discriminator_loss(real_output, fake_output)
 
-    with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
-        generated_images = generator(noise, training=True)
+        self.generator_loss_metrics(gen_loss)
+        self.discriminator_loss_metrics(disc_loss)
 
-        real_output = discriminator(images, training=True)
-        fake_output = discriminator(generated_images, training=True)
+        gen_gradients = gen_tape.gradient(gen_loss, self.generator.trainable_variables)
+        disc_gradients = disc_tape.gradient(disc_loss, self.discriminator.trainable_variables)
 
-        gen_loss = generator_loss(fake_output)
-        disc_loss = discriminator_loss(real_output, fake_output)
+        self.generator_optimizer.apply_gradients(zip(gen_gradients, self.generator.trainable_variables))
+        self.discriminator_optimizer.apply_gradients(zip(disc_gradients, self.discriminator.trainable_variables))
 
-    generator_loss_metrics(gen_loss)
-    discriminator_loss_metrics(disc_loss)
+    def save_generated_image(self, epoch):
+        predictions = self.generator(self.fixed_noise, training=False)
 
-    gen_gradients = gen_tape.gradient(gen_loss, generator.trainable_variables)
-    disc_gradients = disc_tape.gradient(disc_loss, discriminator.trainable_variables)
+        fig = plt.figure(figsize=(4, 4))
 
-    generator_optimizer.apply_gradients(zip(gen_gradients, generator.trainable_variables))
-    discriminator_optimizer.apply_gradients(zip(disc_gradients, discriminator.trainable_variables))
+        for i in range(predictions.shape[0]):
+            ax = fig.add_subplot(4, 4, i + 1)
+            ax.imshow(predictions[i, :, :, 0] * 127.5 + 127.5, cmap='gray')
+            ax.axis('off')
 
+        fig.tight_layout()
+        fig.savefig(os.path.join(OUTPUT_DIR_PATH, f"epoch_{epoch}"), dpi=300)
+        plt.close()
 
-fixed_noise = tf.random.normal([16, NOISE_DIM])
+    def train(self, epochs):
+        for epoch in range(epochs):
+            for image_batch in self.dataset:
+                self.train_step(image_batch)
 
+            with self.summary_writer.as_default():
+                tf.summary.scalar('generator_loss', self.generator_loss_metrics.result(), step=epoch)
+                tf.summary.scalar('discriminator_loss', self.discriminator_loss_metrics.result(), step=epoch)
 
-def save_generated_image(epoch):
-    predictions = generator(fixed_noise, training=False)
+            logging.info(f"Epoch {epoch + 1},"
+                         f"\t Generator loss: {self.generator_loss_metrics.result()}"
+                         f"\t Discriminator loss: {self.discriminator_loss_metrics.result()}")
 
-    fig = plt.figure(figsize=(4, 4))
+            if (epoch + 1) % CHECKPOINT_INTERVAL == 0:
+                self.checkpoint.save(file_prefix=CHECKPOINT_PREFIX)
 
-    for i in range(predictions.shape[0]):
-        ax = fig.add_subplot(4, 4, i + 1)
-        ax.imshow(predictions[i, :, :, 0] * 127.5 + 127.5, cmap='gray')
-        ax.axis('off')
-
-    fig.tight_layout()
-    fig.savefig(os.path.join(OUTPUT_DIR_PATH, f"epoch_{epoch}"), dpi=300)
-    plt.close()
-
-
-dataset = load_dataset()
-
-summary_writer = tf.summary.create_file_writer(LOG_FILE_PATH)
-
-
-def train(epochs):
-    for epoch in range(epochs):
-        for image_batch in dataset:
-            train_step(image_batch)
-
-        with summary_writer.as_default():
-            tf.summary.scalar('generator_loss', generator_loss_metrics.result(), step=epoch)
-            tf.summary.scalar('discriminator_loss', discriminator_loss_metrics.result(), step=epoch)
-
-        logging.info(f"Epoch {epoch + 1},"
-                     f"\t Generator loss: {generator_loss_metrics.result()}"
-                     f"\t Discriminator loss: {discriminator_loss_metrics.result()}")
-
-        if (epoch + 1) % CHECKPOINT_INTERVAL == 0:
-            checkpoint.save(file_prefix=CHECKPOINT_PREFIX)
-
-        generator_loss_metrics.reset_states()
-        discriminator_loss_metrics.reset_states()
-        save_generated_image(epoch + 1)
+            self.generator_loss_metrics.reset_states()
+            self.discriminator_loss_metrics.reset_states()
+            self.save_generated_image(epoch + 1)
