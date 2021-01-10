@@ -3,8 +3,8 @@ import fire
 from mygan.idol.trainer import Trainer
 
 
-def train(epochs, tag, data_path):
-    trainer = Trainer(tag, data_path)
+def train(epochs, tag, data_path, output_path=None):
+    trainer = Trainer(tag, data_path, output_path)
     trainer.train(epochs)
 
 
