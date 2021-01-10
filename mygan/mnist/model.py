@@ -5,6 +5,7 @@ from mygan.mnist import NOISE_DIM
 
 def make_generator():
     model = Sequential()
+
     model.add(layers.Dense(7 * 7 * 256, use_bias=False, input_shape=(NOISE_DIM,)))
     model.add(layers.BatchNormalization())
     model.add(layers.LeakyReLU())
@@ -27,17 +28,26 @@ def make_generator():
     return model
 
 
+_ = make_generator()
+
+
 def make_discriminator():
     model = Sequential()
-    model.add(layers.Conv2D(64, (5, 5), strides=(2, 2), padding='same', input_shape=(28, 28, 1)))
-    model.add(layers.LeakyReLU())
-    model.add(layers.Dropout(0.3))
 
-    model.add(layers.Conv2D(128, (5, 5), strides=(2, 2), padding='same'))
+    model.add(layers.Conv2D(64, kernel_size=5, strides=2, padding='same', input_shape=(28, 28, 1)))
     model.add(layers.LeakyReLU())
     model.add(layers.Dropout(0.3))
+    assert model.output_shape == (None, 14, 14, 64)
+
+    model.add(layers.Conv2D(128, kernel_size=5, strides=2, padding='same'))
+    model.add(layers.LeakyReLU())
+    model.add(layers.Dropout(0.3))
+    assert model.output_shape == (None, 7, 7, 128)
 
     model.add(layers.Flatten())
     model.add(layers.Dense(1))
 
     return model
+
+
+_ = make_discriminator()
