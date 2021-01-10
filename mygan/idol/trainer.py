@@ -85,12 +85,15 @@ class Trainer:
 
     def save_generated_image(self, epoch):
         predictions = self.generator(self.fixed_noise, training=False)
+        predictions = predictions.numpy()
+        predictions[predictions < 0] = 0
+        predictions[predictions > 1] = 1
 
         fig = plt.figure(figsize=(4, 4))
 
         for i in range(predictions.shape[0]):
             ax = fig.add_subplot(4, 4, i + 1)
-            ax.imshow(predictions[i, :, :, :] * 225)
+            ax.imshow(predictions[i])
             ax.axis("off")
 
         fig.tight_layout()
@@ -99,7 +102,7 @@ class Trainer:
 
     def train(self, epochs):
         for epoch in range(epochs):
-            for images, _ in self.dataset:
+            for images in self.dataset:
                 self.train_step(images)
 
             with self.summary_writer.as_default():
