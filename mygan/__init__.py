@@ -1,6 +1,8 @@
 import logging
 import os
 
+logging.basicConfig(level=logging.INFO)
+
 PackageRoot = os.path.dirname(os.path.dirname(__file__))
 ProjectResourcesRoot = PackageRoot
 

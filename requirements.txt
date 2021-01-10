@@ -1,5 +1,6 @@
 numpy
 requests
+tensorflow
 pandas
 opencv-python
 fire
