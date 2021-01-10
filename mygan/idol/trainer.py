@@ -115,7 +115,7 @@ class Trainer:
 
             if (epoch + 1) % 10 == 0:
                 self.checkpoint.save(file_prefix=self.checkpoint_prefix)
+                self.save_generated_image(epoch + 1)
 
             self.generator_loss_metrics.reset_states()
             self.discriminator_loss_metrics.reset_states()
-            self.save_generated_image(epoch + 1)
