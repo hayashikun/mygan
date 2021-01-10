@@ -1,7 +1,5 @@
 numpy
 requests
-torch
-torchvision
 pandas
 opencv-python
 fire
