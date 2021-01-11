@@ -26,15 +26,15 @@ class Trainer:
         else:
             self.output_path = os.path.join(TmpFilePath, "idol", tag)
 
-        self.log_file_path = os.path.join(self.output_path, "log")
-        self.checkpoint_path = os.path.join(self.output_path, "checkpoint")
-        self.checkpoint_prefix = os.path.join(self.checkpoint_path, "checkpoint")
+        self.log_file_dir = os.path.join(self.output_path, "log")
+        self.checkpoint_dir = os.path.join(self.output_path, "checkpoint")
+        self.checkpoint_prefix = os.path.join(self.checkpoint_dir, "checkpoint")
 
-        for d in [self.output_path, self.checkpoint_path]:
+        for d in [self.output_path, self.checkpoint_dir]:
             if not os.path.exists(d):
                 os.makedirs(d)
 
-        self.summary_writer = tf.summary.create_file_writer(self.log_file_path)
+        self.summary_writer = tf.summary.create_file_writer(self.log_file_dir)
         self.generator_loss_metrics = tf.keras.metrics.Mean("generator_loss", dtype=tf.float32)
         self.discriminator_loss_metrics = tf.keras.metrics.Mean("discriminator_loss", dtype=tf.float32)
 
@@ -100,6 +100,9 @@ class Trainer:
         fig.savefig(os.path.join(self.output_path, f"epoch_{epoch}.jpg"), dpi=150)
         plt.close()
 
+    def save_checkpoint(self):
+        self.checkpoint.save(file_prefix=self.checkpoint_prefix)
+
     def train(self, epochs):
         for epoch in range(epochs):
             for images in self.dataset:
@@ -117,7 +120,7 @@ class Trainer:
                 self.save_generated_image(epoch + 1)
 
             if (epoch + 1) % 100 == 0:
-                self.checkpoint.save(file_prefix=self.checkpoint_prefix)
+                self.save_checkpoint()
 
             self.generator_loss_metrics.reset_states()
             self.discriminator_loss_metrics.reset_states()
