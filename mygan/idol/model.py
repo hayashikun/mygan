@@ -4,11 +4,16 @@ from tensorflow.keras import layers, Sequential
 def make_generator(noise_dim):
     model = Sequential()
 
-    model.add(layers.Dense(8 * 8 * 256, use_bias=False, input_shape=(noise_dim,)))
+    model.add(layers.Dense(4 * 4 * 512, use_bias=False, input_shape=(noise_dim,)))
     model.add(layers.BatchNormalization())
     model.add(layers.LeakyReLU())
-    model.add(layers.Reshape((8, 8, 256)))
+    model.add(layers.Reshape((4, 4, 512)))
+    assert model.output_shape == (None, 4, 4, 512)
+
+    model.add(layers.Conv2DTranspose(256, kernel_size=5, strides=2, padding="same", use_bias=False))
     assert model.output_shape == (None, 8, 8, 256)
+    model.add(layers.BatchNormalization())
+    model.add(layers.LeakyReLU())
 
     model.add(layers.Conv2DTranspose(128, kernel_size=5, strides=2, padding="same", use_bias=False))
     assert model.output_shape == (None, 16, 16, 128)
@@ -56,6 +61,11 @@ def make_discriminator():
     model.add(layers.LeakyReLU())
     model.add(layers.Dropout(0.3))
     assert model.output_shape == (None, 8, 8, 256)
+
+    model.add(layers.Conv2D(512, kernel_size=5, strides=2, padding="same"))
+    model.add(layers.LeakyReLU())
+    model.add(layers.Dropout(0.3))
+    assert model.output_shape == (None, 4, 4, 512)
 
     model.add(layers.Flatten())
     model.add(layers.Dense(1))
