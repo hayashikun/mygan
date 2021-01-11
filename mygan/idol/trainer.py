@@ -3,6 +3,7 @@ import os
 
 import matplotlib.pyplot as plt
 import tensorflow as tf
+import tensorflowjs as tfjs
 
 from mygan import TmpFilePath
 from mygan.idol.dataset import load_dataset
@@ -38,8 +39,9 @@ class Trainer:
         self.log_file_dir = os.path.join(self.output_path, "log")
         self.checkpoint_dir = os.path.join(self.output_path, "checkpoint")
         self.checkpoint_prefix = os.path.join(self.checkpoint_dir, "checkpoint")
+        self.tfjs_export_dir = os.path.join(self.output_path, "tfjs")
 
-        for d in [self.output_path, self.checkpoint_dir]:
+        for d in [self.output_path, self.checkpoint_dir, self.tfjs_export_dir]:
             if not os.path.exists(d):
                 os.makedirs(d)
 
@@ -54,7 +56,10 @@ class Trainer:
         self.generator_loss_metrics = tf.keras.metrics.Mean("generator_loss", dtype=tf.float32)
         self.discriminator_loss_metrics = tf.keras.metrics.Mean("discriminator_loss", dtype=tf.float32)
 
-        self.dataset = load_dataset(data_path, self.batch_size, 64)
+        if os.path.exists(data_path):
+            self.dataset = load_dataset(data_path, self.batch_size, 64)
+        else:
+            self.dataset = []
 
     def generator_loss(self, fake_output):
         return self.criterion(tf.ones_like(fake_output), fake_output)
@@ -141,3 +146,5 @@ class Trainer:
 
             self.epoch = epoch
 
+    def export_tfjs_generator(self):
+        tfjs.converters.save_keras_model(self.generator, self.tfjs_export_dir)
