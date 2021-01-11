@@ -8,9 +8,13 @@ from mygan import TmpFilePath
 from mygan.idol.dataset import load_dataset
 from mygan.idol.model import make_generator, make_discriminator
 
+SAVE_IMAGE_INTERVAL = 10
+CHECKPOINT_INTERVAL = 100
+
 
 class Trainer:
     def __init__(self, tag, data_path, output_path=None):
+        self.epoch = 0
         self.batch_size = 100
         self.noise_dim = 256
         self.generator = make_generator(self.noise_dim)
@@ -38,6 +42,13 @@ class Trainer:
         for d in [self.output_path, self.checkpoint_dir]:
             if not os.path.exists(d):
                 os.makedirs(d)
+
+        self.checkpoint_epoch_log_path = os.path.join(self.log_file_dir, "epoch")
+
+        if os.path.exists(self.checkpoint_epoch_log_path):
+            with open(self.checkpoint_epoch_log_path) as fp:
+                self.epoch = int(fp.read())
+                self.checkpoint.restore(tf.train.latest_checkpoint(self.checkpoint_dir))
 
         self.summary_writer = tf.summary.create_file_writer(self.log_file_dir)
         self.generator_loss_metrics = tf.keras.metrics.Mean("generator_loss", dtype=tf.float32)
@@ -100,11 +111,14 @@ class Trainer:
         fig.savefig(os.path.join(self.output_path, f"epoch_{epoch}.jpg"), dpi=150)
         plt.close()
 
-    def save_checkpoint(self):
+    def save_checkpoint(self, epoch):
         self.checkpoint.save(file_prefix=self.checkpoint_prefix)
+        with open(self.checkpoint_epoch_log_path, 'w') as fp:
+            fp.write(str(epoch))
 
     def train(self, epochs):
-        for epoch in range(epochs):
+        start_epoch = self.epoch
+        for epoch in range(start_epoch, start_epoch + epochs):
             for images in self.dataset:
                 self.train_step(images)
 
@@ -116,11 +130,14 @@ class Trainer:
                          f"\t Generator loss: {self.generator_loss_metrics.result()}"
                          f"\t Discriminator loss: {self.discriminator_loss_metrics.result()}")
 
-            if (epoch + 1) % 10 == 0:
+            if (epoch + 1) % SAVE_IMAGE_INTERVAL == 0:
                 self.save_generated_image(epoch + 1)
 
-            if (epoch + 1) % 100 == 0:
-                self.save_checkpoint()
+            if (epoch + 1) % CHECKPOINT_INTERVAL == 0:
+                self.save_checkpoint(epoch + 1)
 
             self.generator_loss_metrics.reset_states()
             self.discriminator_loss_metrics.reset_states()
+
+            self.epoch = epoch
+
