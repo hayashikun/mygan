@@ -19,7 +19,7 @@ const IdolPage: React.FC = () => {
             setModel(tfjs);
             setImageSize(tfjs.outputs[0].shape[1] || 0);
             setNoise([...Array(tfjs.inputs[0].shape[1] || 0)].map(
-                (_, i) => i < 8 ? 0 : Math.random() * 4 - 2
+                (_, i) => i < 16 ? 0 : Math.random() * 8 - 4
             ));
         })()
     }, []);
@@ -69,10 +69,10 @@ const IdolPage: React.FC = () => {
             <p>{model == null ? "Model loading..." : "Model loaded."}</p>
 
             <ul style={{listStyle: "none", width: "50%", margin: "auto"}}>
-                {[...Array(8)].map(
+                {[...Array(16)].map(
                     (_, i) => {
                         return <li key={"slider-li-" + i}>
-                            <Slider min={-5} max={5} step={0.5} defaultValue={0} onChange={e => onSliderChange(e, i)}/>
+                            <Slider min={-4} max={4} step={0.5} defaultValue={0} onChange={e => onSliderChange(e, i)}/>
                         </li>
                     })}
             </ul>
