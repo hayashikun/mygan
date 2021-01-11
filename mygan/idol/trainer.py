@@ -21,6 +21,11 @@ class Trainer:
         self.generator_optimizer = tf.keras.optimizers.Adam(1e-4)
         self.discriminator_optimizer = tf.keras.optimizers.Adam(1e-4)
 
+        self.checkpoint = tf.train.Checkpoint(generator_optimizer=self.generator_optimizer,
+                                              discriminator_optimizer=self.discriminator_optimizer,
+                                              generator=self.generator,
+                                              discriminator=self.discriminator)
+
         if output_path is not None:
             self.output_path = os.path.join(output_path, tag)
         else:
@@ -38,12 +43,7 @@ class Trainer:
         self.generator_loss_metrics = tf.keras.metrics.Mean("generator_loss", dtype=tf.float32)
         self.discriminator_loss_metrics = tf.keras.metrics.Mean("discriminator_loss", dtype=tf.float32)
 
-        self.dataset = load_dataset(data_path, self.batch_size, 128)
-
-        self.checkpoint = tf.train.Checkpoint(generator_optimizer=self.generator_optimizer,
-                                              discriminator_optimizer=self.discriminator_optimizer,
-                                              generator=self.generator,
-                                              discriminator=self.discriminator)
+        self.dataset = load_dataset(data_path, self.batch_size, 64)
 
     def generator_loss(self, fake_output):
         return self.criterion(tf.ones_like(fake_output), fake_output)
