@@ -96,8 +96,8 @@ class Trainer:
             ax.imshow(predictions[i])
             ax.axis("off")
 
-        fig.tight_layout()
-        fig.savefig(os.path.join(self.output_path, f"epoch_{epoch}"), dpi=300)
+        fig.tight_layout(pad=0.2)
+        fig.savefig(os.path.join(self.output_path, f"epoch_{epoch}.jpg"), dpi=150)
         plt.close()
 
     def train(self, epochs):
