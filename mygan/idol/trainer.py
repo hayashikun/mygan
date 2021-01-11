@@ -114,8 +114,10 @@ class Trainer:
                          f"\t Discriminator loss: {self.discriminator_loss_metrics.result()}")
 
             if (epoch + 1) % 10 == 0:
-                self.checkpoint.save(file_prefix=self.checkpoint_prefix)
                 self.save_generated_image(epoch + 1)
+
+            if (epoch + 1) % 100 == 0:
+                self.checkpoint.save(file_prefix=self.checkpoint_prefix)
 
             self.generator_loss_metrics.reset_states()
             self.discriminator_loss_metrics.reset_states()
