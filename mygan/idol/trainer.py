@@ -11,12 +11,13 @@ from mygan.idol.model import make_generator, make_discriminator
 
 SAVE_IMAGE_INTERVAL = 10
 CHECKPOINT_INTERVAL = 100
+IMAGE_SIZE = 128
 
 
 class Trainer:
     def __init__(self, tag, data_path, output_path=None):
         self.epoch = 0
-        self.batch_size = 100
+        self.batch_size = 200
         self.noise_dim = 256
         self.generator = make_generator(self.noise_dim)
         self.discriminator = make_discriminator()
@@ -57,7 +58,7 @@ class Trainer:
         self.discriminator_loss_metrics = tf.keras.metrics.Mean("discriminator_loss", dtype=tf.float32)
 
         if os.path.exists(data_path):
-            self.dataset = load_dataset(data_path, self.batch_size, 64)
+            self.dataset = load_dataset(data_path, self.batch_size, IMAGE_SIZE)
         else:
             self.dataset = []
 
