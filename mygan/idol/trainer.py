@@ -147,4 +147,4 @@ class Trainer:
             self.epoch = epoch
 
     def export_tfjs_generator(self):
-        tfjs.converters.save_keras_model(self.generator, self.tfjs_export_dir)
+        tfjs.converters.save_keras_model(self.generator, self.tfjs_export_dir, quantization_dtype_map={"uint8": "*"})
